@@ -2,6 +2,7 @@ package info.johtani.sample.es.client.indexer;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch._types.RequestBase;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.CountRequest;
@@ -9,37 +10,45 @@ import co.elastic.clients.elasticsearch.core.CountResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.indices.*;
 import co.elastic.clients.elasticsearch.indices.update_aliases.Action;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import co.elastic.clients.json.SimpleJsonpMapper;
 import info.johtani.sample.es.client.AbstractEsService;
 import info.johtani.sample.es.client.Logger;
 import info.johtani.sample.es.client.WikiDocument;
+import jakarta.json.stream.JsonGenerator;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class EsIndexService extends AbstractEsService {
 
-    // JSONにして設定する必要があるため
-    private static String toJsonString(WikiDocument doc) {
-        ObjectMapper mapper = new ObjectMapper();
-        String json = null;
-        try {
-            json = mapper.writeValueAsString(doc);
-        } catch (JsonProcessingException e) {
-            Logger.log("to json error...");
-            e.printStackTrace();
-        }
-        return json;
+    private void printRequestBodyJsonForDebug(RequestBase request) {
+
+        //for debug
+        Logger.log("** Debug print start **");
+        StringWriter writer = new StringWriter();
+        SimpleJsonpMapper mapper = new SimpleJsonpMapper();
+        JsonGenerator generator = mapper.jsonProvider().createGenerator(writer);
+        mapper.serialize(request, generator);
+        generator.close();
+        Logger.log(writer.toString());
+        Logger.log("** Debug print finish **");
     }
 
     public CreateTemplateResult createIndexTemplate(CreateTemplateRequest req) {
         CreateTemplateResult result = new CreateTemplateResult();
         try {
             PutIndexTemplateRequest request = req.buildEsRequest();
+            printRequestBodyJsonForDebug(request);
             PutIndexTemplateResponse response = client.indices().putIndexTemplate(request);
             result.setError(!response.acknowledged());
+        } catch (ElasticsearchException ee) {
+            //Runtime Exception
+            Logger.log(ee.getMessage());
+            //TODO 簡単に出力できないのか？
+            Logger.log(ee.error().causedBy().causedBy().reason());
+            ee.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -68,6 +77,10 @@ public class EsIndexService extends AbstractEsService {
             } else {
                 Logger.log("Bulk indexing success!");
             }
+        } catch (ElasticsearchException ee) {
+            //Runtime Exception
+            Logger.log(ee.getMessage());
+            ee.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
             // FIXME log errors
@@ -95,7 +108,6 @@ public class EsIndexService extends AbstractEsService {
             //Runtime Exception
             Logger.log(ee.getMessage());
             ee.printStackTrace();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
