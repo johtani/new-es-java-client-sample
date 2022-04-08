@@ -79,7 +79,7 @@ public class SampleClient {
             e.printStackTrace();
         }
 
-        Logger.log("Counting new index...");
+        Logger.log("Counting old index...");
         long oldCount = -1;
         try {
             oldCount = service.countDocs(oldIndexName);
@@ -90,7 +90,6 @@ public class SampleClient {
 
         if (oldCount != newCount) {
             Logger.log("Warn counts are difference.");
-            System.exit(1);
         }
 
 
