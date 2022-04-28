@@ -12,10 +12,13 @@ public class AbstractEsService {
 
     // クライアントの初期化
     public void init() {
+        this.init("192.168.1.240");
+    }
+    public void init(String hostname) {
         client = new ElasticsearchClient(
                 new RestClientTransport(
                         RestClient.builder(
-                                new HttpHost("192.168.1.240", 9200, "http")
+                                new HttpHost(hostname, 9200, "http")
                         ).build(),
                         new JacksonJsonpMapper()
                 )
