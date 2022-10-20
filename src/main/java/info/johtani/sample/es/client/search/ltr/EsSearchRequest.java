@@ -3,6 +3,8 @@ package info.johtani.sample.es.client.search.ltr;
 
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -60,33 +62,37 @@ public class EsSearchRequest {
                                 )
 
                 ).build();
-
-
         Rescore rescore = Rescore.of(
                 r -> r
                     .windowSize(1000)
                     .query(
                             RescoreQuery.of(rq -> rq
                                             .query(Query.of(q -> q
-                                                    .withJson(
-                                                            ltrQuery
-                                                    )
+                                                    ._custom("sltr", ltrQueryParams())
                                             ))
                                     )
                     )
         );
         SearchRequest esRequest = SearchRequest.of(r -> r
+                .index("")
                 .query(query)
                 .rescore(rescore)
         );
         return esRequest;
     }
 
-    static Reader ltrQuery = new StringReader("\n{" +
-            "        \"sltr\": {\n" +
-            "          \"params\": {},\n" +
-            "          \"model\": \"latest\"\n" +
-            "        }}"
+//    static Reader ltrQuery = new StringReader("\n{" +
+//            "        \"sltr\": {\n" +
+//            "          \"params\": {},\n" +
+//            "          \"model\": \"latest\"\n" +
+//            "        }}"
+//
+//    );
 
-    );
+    private Map<String,Object> ltrQueryParams() {
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("params", new HashMap<String, Object>());
+        params.put("model", "latest");
+        return params;
+    }
 }

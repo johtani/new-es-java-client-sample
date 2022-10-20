@@ -46,10 +46,14 @@ public class EsSearchResult {
         Logger.log("--- print result ---");
         Logger.log("hit count: " + this.totalHits);
         int count = 0;
-        for (TMDBDocument result : this.results) {
-            count++;
-            Logger.log("doc[" + count +"]");
-            result.printDoc();
+        if (this.results != null) {
+            for (TMDBDocument result : this.results) {
+                count++;
+                Logger.log("doc[" + count + "]");
+                result.printDoc();
+            }
+        } else {
+            Logger.log("results is null");
         }
     }
 }
