@@ -24,15 +24,9 @@ import java.util.stream.Collectors;
 public class EsIndexService extends AbstractEsService {
 
     private void printRequestBodyJsonForDebug(RequestBase request) {
-
         //for debug
         Logger.log("** Debug print start **");
-        StringWriter writer = new StringWriter();
-        SimpleJsonpMapper mapper = new SimpleJsonpMapper();
-        JsonGenerator generator = mapper.jsonProvider().createGenerator(writer);
-        mapper.serialize(request, generator);
-        generator.close();
-        Logger.log(writer.toString());
+        Logger.log(request.toString());
         Logger.log("** Debug print finish **");
     }
 
@@ -65,7 +59,7 @@ public class EsIndexService extends AbstractEsService {
                 ).collect(Collectors.toList()))
                 .refresh(Refresh.True)
         );
-
+        printRequestBodyJsonForDebug(request);
         try {
             BulkResponse res = client.bulk(request);
             // FIXME error check
@@ -97,6 +91,7 @@ public class EsIndexService extends AbstractEsService {
                 .actions(Action.of(af -> af.add(v -> v.alias(name).index(newIndex))))
                 .actions(Action.of(af -> af.remove(v -> v.alias(name).index(oldIndex))))
         );
+        printRequestBodyJsonForDebug(request);
         try {
             UpdateAliasesResponse res = client.indices().updateAliases(request);
             result.setError(!res.acknowledged());
@@ -116,12 +111,14 @@ public class EsIndexService extends AbstractEsService {
 
     public boolean existsIndex(String indexName) throws IOException {
         ExistsRequest request = ExistsRequest.of(f -> f.index(indexName));
+        printRequestBodyJsonForDebug(request);
         return client.indices().exists(request).value();
     }
 
     public DeleteResult deleteIndex(String indexName) throws IOException {
         DeleteResult result = new DeleteResult();
         DeleteIndexRequest request = DeleteIndexRequest.of(f -> f.index(indexName));
+        printRequestBodyJsonForDebug(request);
         try {
             DeleteIndexResponse response = client.indices().delete(request);
             result.setError(!response.acknowledged());
@@ -142,6 +139,7 @@ public class EsIndexService extends AbstractEsService {
     public long countDocs(String indexName) throws IOException {
         long count = -1;
         CountRequest request = CountRequest.of(f -> f.index(indexName));
+        printRequestBodyJsonForDebug(request);
         try {
             CountResponse res = client.count(request);
             count = res.count();
